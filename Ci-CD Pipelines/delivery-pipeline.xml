@@ -1,0 +1,20 @@
+<flow-definition plugin="workflow-job@1203.v7b_7023424efe">
+    <actions>
+        <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@2.2097.v33db_b_de764b_e"/>
+        <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@2.2097.v33db_b_de764b_e">
+            <jobProperties/>
+            <triggers/>
+            <parameters/>
+            <options/>
+        </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+    </actions>
+    <description/>
+    <keepDependencies>false</keepDependencies>
+    <properties/>
+    <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2746.v0da_83a_332669">
+        <script>pipeline { agent any stages { stage('Clone') { steps { git credentialsId: 'fd58489d-f6ac-4725-926b-894b487cde13', url: 'https://github.com/hiteshbahar/EffectiveJava.git' } } stage('Project Type') { steps { script { def USER_INPUT = input( message: 'User input required - please select the project build', parameters: [ [$class: 'ChoiceParameterDefinition', choices: ['gradle','maven'].join('\n'), name: 'input', description: 'Menu - select project build'] ]) } } } stage('Compile') { steps { bat 'gradlew.bat clean build' bat 'gradlew.bat war' } } stage('Unit Tests') { steps { bat 'gradlew.bat test' } post { always { junit '**/build/test-results/test/TEST-*.xml' } } } stage('Packaging') { steps { bat 'gradlew.bat assemble' stash includes: '**/build/libs/*.war', name: 'app' } } stage('Dev') { steps { echo 'deploying to production' } } stage('Promote to PROD') { steps { timeout(time: 1, unit:'DAYS') { input 'Deploy to Production?' } } } stage('Production') { steps { echo 'deploying to production' } } } } def gradlew(String... args) { sh "./gradlew ${args.join(' ')} -s" }</script>
+        <sandbox>true</sandbox>
+    </definition>
+    <triggers/>
+    <disabled>false</disabled>
+</flow-definition>
